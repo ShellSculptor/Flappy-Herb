@@ -50,16 +50,25 @@ bot.onText(/\/leaderboard/, async (msg) => {
 
 // Handle callback queries (button presses)
 bot.on('callback_query', async (callbackQuery) => {
-    const message = callbackQuery.message;
-    const data = callbackQuery.data;
+    console.log('Button clicked:', callbackQuery.data);
     
-    if (data === 'leaderboard') {
-        await showLeaderboard(message.chat.id);
+    try {
+        const message = callbackQuery.message;
+        const data = callbackQuery.data;
+        
+        if (data === 'leaderboard') {
+            await showLeaderboard(message.chat.id);
+        }
+        
+        // CRITICAL: Answer the callback
+        await bot.answerCallbackQuery(callbackQuery.id);
+        
+    } catch (error) {
+        console.error('Callback error:', error);
+        await bot.answerCallbackQuery(callbackQuery.id, { text: 'Error occurred' });
     }
-    
-    // Answer the callback query
-    bot.answerCallbackQuery(callbackQuery.id);
 });
+
 
 // Function to show leaderboard
 async function showLeaderboard(chatId) {
