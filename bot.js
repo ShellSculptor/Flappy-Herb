@@ -63,14 +63,33 @@ bot.on('callback_query', async (callbackQuery) => {
 
 // Function to show leaderboard
 async function showLeaderboard(chatId) {
+    console.log('🔍 showLeaderboard called for:', chatId);
+    
     try {
+        // Test if we can connect to Supabase at all
+        console.log('📊 Testing Supabase connection...');
+        
         const { data, error } = await supabase
             .from('leaderboard')
             .select('username, first_name, score')
             .order('score', { ascending: false })
             .limit(10);
         
-        if (error) throw error;
+        console.log('📊 Supabase response:', { 
+            hasData: !!data, 
+            dataLength: data?.length, 
+            errorMessage: error?.message 
+        });
+        
+        if (error) {
+            console.error('Database error:', error);
+            bot.sendMessage(chatId, `❌ Database error: ${error.message}`);
+            return;
+        }
+        
+        // Simple test message first
+        bot.sendMessage(chatId, `✅ Found ${data.length} players in database`);
+        
         
         let leaderboard = '🏆 *TOP 10 LEADERBOARD*\n\n';
         
@@ -110,8 +129,8 @@ async function showLeaderboard(chatId) {
         });
         
     } catch (error) {
-        console.error('Leaderboard error:', error);
-        bot.sendMessage(chatId, '❌ Error loading leaderboard. Please try again later.');
+        console.error('❌ showLeaderboard crashed:', error);
+        bot.sendMessage(chatId, `❌ Function error: ${error.message}`);
     }
 }
 
