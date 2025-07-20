@@ -66,73 +66,32 @@ async function showLeaderboard(chatId) {
     console.log('🔍 showLeaderboard called for:', chatId);
     
     try {
-        // Test if we can connect to Supabase at all
-        console.log('📊 Testing Supabase connection...');
-        
         const { data, error } = await supabase
             .from('leaderboard')
             .select('username, first_name, score')
             .order('score', { ascending: false })
             .limit(10);
         
-        console.log('📊 Supabase response:', { 
-            hasData: !!data, 
-            dataLength: data?.length, 
-            errorMessage: error?.message 
-        });
+        if (error) throw error;
         
-        if (error) {
-            console.error('Database error:', error);
-            bot.sendMessage(chatId, `❌ Database error: ${error.message}`);
-            return;
-        }
-        
-        // Simple test message first
+        // Test message
         bot.sendMessage(chatId, `✅ Found ${data.length} players in database`);
         
-        
-        let leaderboard = '🏆 *TOP 10 LEADERBOARD*\n\n';
-        
-        if (data.length === 0) {
-            leaderboard += '🎯 No scores yet!\nBe the first to play and set a record!';
-        } else {
-            data.forEach((row, index) => {
-                const position = index + 1;
-                let medal = '';
-                
-                switch (position) {
-                    case 1: medal = '🥇'; break;
-                    case 2: medal = '🥈'; break;
-                    case 3: medal = '🥉'; break;
-                    default: medal = `${position}.`; break;
-                }
-                
-                const name = row.username ? `@${row.username}` : row.first_name;
-                leaderboard += `${medal} ${name}: *${row.score}* points\n`;
-            });
-        }
-        
-        const keyboard = {
-            inline_keyboard: [
-                [
-                    {
-                        text: '🎮 Play Game',
-                        web_app: { url: GAME_URL }
-                    }
-                ]
-            ]
-        };
-        
-        bot.sendMessage(chatId, leaderboard, { 
-            parse_mode: 'Markdown',
-            reply_markup: keyboard
+        // SIMPLE TEST - just send raw data
+        let simpleList = '🏆 LEADERBOARD:\n\n';
+        data.forEach((player, index) => {
+            simpleList += `${index + 1}. ${player.first_name}: ${player.score}\n`;
         });
         
+        // Send the simple version
+        bot.sendMessage(chatId, simpleList);
+        
     } catch (error) {
-        console.error('❌ showLeaderboard crashed:', error);
-        bot.sendMessage(chatId, `❌ Function error: ${error.message}`);
+        console.error('❌ Error:', error);
+        bot.sendMessage(chatId, `❌ Error: ${error.message}`);
     }
 }
+
 
 // Handle errors
 bot.on('error', (error) => {
