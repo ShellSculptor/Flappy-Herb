@@ -52,6 +52,7 @@ bot.onText(/\/leaderboard/, async (msg) => {
 
 // Handle callback queries (button presses)
 bot.on('callback_query', async (callbackQuery) => {
+    console.log('🔘 Button clicked:', callbackQuery.data);
     const userId = callbackQuery.from.id;
     const now = Date.now();
     
@@ -77,15 +78,19 @@ bot.on('callback_query', async (callbackQuery) => {
 
 // Function to show leaderboard
 async function showLeaderboard(chatId) {
+    console.log('🔍 Leaderboard requested for chat:', chatId);
+    
     try {
-        // Add timeout and retry logic
+        console.log('📊 Querying database...');
+        
         const { data, error } = await supabase
             .from('leaderboard')
             .select('username, first_name, score')
             .order('score', { ascending: false })
-            .limit(10)
-            .abortSignal(AbortSignal.timeout(5000)); // 5 second timeout
-                
+            .limit(10);
+        
+        console.log('📊 Query result:', { dataCount: data?.length, error: error?.message });
+        
         if (error) throw error;
         
         let leaderboard = '🏆 *TOP 10 LEADERBOARD*\n\n';
