@@ -13,8 +13,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 console.log('🤖 Bot starting...');
 
-const rateLimiter = new Map();
-
 // Start command - Shows game button
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
@@ -52,44 +50,25 @@ bot.onText(/\/leaderboard/, async (msg) => {
 
 // Handle callback queries (button presses)
 bot.on('callback_query', async (callbackQuery) => {
-    console.log('🔘 Button clicked:', callbackQuery.data);
-    const userId = callbackQuery.from.id;
-    const now = Date.now();
-    
-    // Rate limit: 1 request per 3 seconds per user
-    if (rateLimiter.has(userId) && now - rateLimiter.get(userId) < 3000) {
-        bot.answerCallbackQuery(callbackQuery.id, { text: '⏳ Please wait...' });
-        return;
-    }
-    
-    rateLimiter.set(userId, now);
-    
     const message = callbackQuery.message;
     const data = callbackQuery.data;
-        
+    
     if (data === 'leaderboard') {
         await showLeaderboard(message.chat.id);
     }
-        
+    
     // Answer the callback query
     bot.answerCallbackQuery(callbackQuery.id);
 });
 
-
 // Function to show leaderboard
 async function showLeaderboard(chatId) {
-    console.log('🔍 Leaderboard requested for chat:', chatId);
-    
     try {
-        console.log('📊 Querying database...');
-        
         const { data, error } = await supabase
             .from('leaderboard')
             .select('username, first_name, score')
             .order('score', { ascending: false })
             .limit(10);
-        
-        console.log('📊 Query result:', { dataCount: data?.length, error: error?.message });
         
         if (error) throw error;
         
@@ -132,16 +111,7 @@ async function showLeaderboard(chatId) {
         
     } catch (error) {
         console.error('Leaderboard error:', error);
-        
-        // Better error message
-        bot.sendMessage(chatId, '⏳ Leaderboard is busy right now. Please try again in a few seconds.', {
-            reply_markup: {
-                inline_keyboard: [[
-                    { text: '🔄 Try Again', callback_data: 'leaderboard' },
-                    { text: '🎮 Play Game', web_app: { url: GAME_URL } }
-                ]]
-            }
-        });
+        bot.sendMessage(chatId, '❌ Error loading leaderboard. Please try again later.');
     }
 }
 
