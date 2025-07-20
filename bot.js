@@ -50,13 +50,16 @@ bot.onText(/\/leaderboard/, async (msg) => {
 
 // Handle callback queries (button presses)
 bot.on('callback_query', async (callbackQuery) => {
-    console.log('Button clicked!');
+    const message = callbackQuery.message;
+    const data = callbackQuery.data;
     
-    // Simple test response
-    await bot.sendMessage(callbackQuery.message.chat.id, 'Button works!');
-    await bot.answerCallbackQuery(callbackQuery.id);
+    if (data === 'leaderboard') {
+        await showLeaderboard(message.chat.id);
+    }
+    
+    // Answer the callback query
+    bot.answerCallbackQuery(callbackQuery.id);
 });
-
 
 // Function to show leaderboard
 async function showLeaderboard(chatId) {
