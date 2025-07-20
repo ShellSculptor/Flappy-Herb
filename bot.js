@@ -63,32 +63,58 @@ bot.on('callback_query', async (callbackQuery) => {
 
 // Function to show leaderboard
 async function showLeaderboard(chatId) {
-    console.log('🔍 showLeaderboard called for:', chatId);
-    
     try {
         const { data, error } = await supabase
             .from('leaderboard')
             .select('username, first_name, score')
             .order('score', { ascending: false })
             .limit(10);
-        
+                
         if (error) throw error;
-        
-        // Test message
-        bot.sendMessage(chatId, `✅ Found ${data.length} players in database`);
-        
-        // SIMPLE TEST - just send raw data
-        let simpleList = '🏆 LEADERBOARD:\n\n';
-        data.forEach((player, index) => {
-            simpleList += `${index + 1}. ${player.first_name}: ${player.score}\n`;
+                
+        let leaderboard = '🏆 *TOP 10 LEADERBOARD*\n\n';
+                
+        if (data.length === 0) {
+            leaderboard += '🎯 No scores yet!\nBe the first to play and set a record!';
+        } else {
+            data.forEach((row, index) => {
+                const position = index + 1;
+                let medal = '';
+                                
+                switch (position) {
+                    case 1: medal = '🥇'; break;
+                    case 2: medal = '🥈'; break;
+                    case 3: medal = '🥉'; break;
+                    default: medal = `${position}.`; break;
+                }
+                
+                // FIX: Escape special characters and handle missing data
+                const name = row.first_name || 'Anonymous';
+                const cleanName = name.replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
+                
+                leaderboard += `${medal} ${cleanName}: *${row.score}* points\n`;
+            });
+        }
+                
+        const keyboard = {
+            inline_keyboard: [
+                [
+                    {
+                        text: '🎮 Play Game',
+                        web_app: { url: GAME_URL }
+                    }
+                ]
+            ]
+        };
+                
+        bot.sendMessage(chatId, leaderboard, { 
+            parse_mode: 'Markdown',
+            reply_markup: keyboard
         });
-        
-        // Send the simple version
-        bot.sendMessage(chatId, simpleList);
-        
+            
     } catch (error) {
-        console.error('❌ Error:', error);
-        bot.sendMessage(chatId, `❌ Error: ${error.message}`);
+        console.error('Leaderboard error:', error);
+        bot.sendMessage(chatId, '❌ Error loading leaderboard. Please try again later.');
     }
 }
 
